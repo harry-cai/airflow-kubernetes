@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: email2liyang/mysql-for-airflow:5.7.24
+        image: caijiawei/docker-mysql:5.7.24
         volumeMounts:
         - name: datadir
           mountPath: /var/lib/mysql
@@ -201,7 +201,7 @@ spec:
           initialDelaySeconds: 20
           periodSeconds: 60
           timeoutSeconds: 10
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
           - name: MY_POD_IP
             valueFrom:
@@ -260,8 +260,8 @@ spec:
     spec:
       containers:
       - name: airflow-celery-webserver
-        image: docker.io/email2liyang/docker-airflow:1.10.2
-        imagePullPolicy: Always
+        image: docker.io/caijiawei/docker-airflow:1.10.10
+        imagePullPolicy: IfNotPresent
         env:
         - name: LOAD_EX
           value: "y"
@@ -281,18 +281,22 @@ spec:
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
           value: CeleryExecutor
+        - name: AIRFLOW__WEBSERVER__RBAC
+          value: "True"
         readinessProbe:
           httpGet:
             path: /admin/
             port: 8080
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
         livenessProbe:
           httpGet:
             path: /admin/
             port: 8080
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 180
+          periodSeconds: 20
+          timeoutSeconds: 5
         ports:
         - name: webserver
           containerPort: 8080
@@ -318,8 +322,8 @@ spec:
     spec:
       containers:
       - name: airflow-celery-flower
-        image: docker.io/email2liyang/docker-airflow:1.10.2
-        imagePullPolicy: Always
+        image: docker.io/caijiawei/docker-airflow:1.10.10
+        imagePullPolicy: IfNotPresent
         env:
         - name: LOAD_EX
           value: "y"
@@ -343,14 +347,16 @@ spec:
           httpGet:
             path: /
             port: 5555
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
         livenessProbe:
           httpGet:
             path: /
             port: 5555
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 180
+          periodSeconds: 20
+          timeoutSeconds: 5
         ports:
         - name: flower
           containerPort: 5555
@@ -376,8 +382,8 @@ spec:
     spec:
       containers:
       - name: airflow-celery-scheduler
-        image: docker.io/email2liyang/docker-airflow:1.10.2
-        imagePullPolicy: Always
+        image: docker.io/caijiawei/docker-airflow:1.10.10
+        imagePullPolicy: IfNotPresent
         env:
         - name: LOAD_EX
           value: "y"
@@ -403,16 +409,18 @@ spec:
             - /bin/bash
             - -c
             - ps -ef | grep scheduler | grep -v "grep"
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
         livenessProbe:
           exec:
             command:
             - /bin/bash
             - -c
             - ps -ef | grep scheduler | grep -v "grep"
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 180
+          periodSeconds: 20
+          timeoutSeconds: 5
         command: ["/entrypoint.sh"]
         args: ["scheduler"]
 ---
@@ -435,8 +443,8 @@ spec:
     spec:
       containers:
       - name: airflow-celery-worker
-        image: docker.io/email2liyang/docker-airflow:1.10.2
-        imagePullPolicy: Always
+        image: docker.io/caijiawei/docker-airflow:1.10.10
+        imagePullPolicy: IfNotPresent
         env:
         - name: LOAD_EX
           value: "y"
@@ -462,16 +470,18 @@ spec:
             - /bin/bash
             - -c
             - ps -ef | grep celeryd | grep -v "grep"
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
         livenessProbe:
           exec:
             command:
             - /bin/bash
             - -c
             - ps -ef | grep celeryd | grep -v "grep"
-          initialDelaySeconds: 8
-          timeoutSeconds: 10
+          initialDelaySeconds: 180
+          periodSeconds: 20
+          timeoutSeconds: 5
         command: ["/entrypoint.sh"]
         args: ["worker"]
 ---
@@ -481,7 +491,7 @@ metadata:
   name: airflow-celery-webserver
   namespace: airflow
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - name: webserver
     port: 8080
