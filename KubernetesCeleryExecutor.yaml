@@ -42,9 +42,9 @@ spec:
       containers:
       - name: mysql
         image: caijiawei/docker-mysql:5.7.24
-        volumeMounts:
-        - name: datadir
-          mountPath: /var/lib/mysql
+#        volumeMounts:
+#        - name: datadir
+#          mountPath: /var/lib/mysql
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: airflow
@@ -59,15 +59,15 @@ spec:
       # No pre-stop hook is required, a SIGTERM plus some time is all that's
       # needed for graceful shutdown of a node.
       terminationGracePeriodSeconds: 60
-  volumeClaimTemplates:
-  - metadata:
-      name: datadir
-    spec:
-      accessModes:
-      - "ReadWriteOnce"
-      resources:
-        requests:
-          storage: 1Gi
+#  volumeClaimTemplates:
+#  - metadata:
+#      name: datadir
+#    spec:
+#      accessModes:
+#      - "ReadWriteOnce"
+#      resources:
+#        requests:
+#          storage: 1Gi
 
 ---
 
@@ -76,7 +76,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: rabbitmq 
+  name: rabbitmq
   namespace: airflow
 ---
 kind: Role
@@ -109,7 +109,7 @@ metadata:
   name: rabbitmq
   labels:
     app: rabbitmq
-    type: LoadBalancer  
+    type: LoadBalancer
 spec:
   type: NodePort
   ports:
@@ -156,7 +156,7 @@ data:
       queue_master_locator=min-masters
       ## See https://www.rabbitmq.com/access-control.html#loopback-users
       loopback_users.guest = false
-   
+
 ---
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -173,14 +173,14 @@ spec:
     spec:
       serviceAccountName: rabbitmq
       terminationGracePeriodSeconds: 10
-      containers:        
+      containers:
       - name: rabbitmq-k8s
         image: rabbitmq:3.7
         volumeMounts:
           - name: config-volume
             mountPath: /etc/rabbitmq
-          - name: datadir
-            mountPath: /var/lib/rabbitmq  
+#          - name: datadir
+#            mountPath: /var/lib/rabbitmq
         ports:
           - name: http
             protocol: TCP
@@ -210,7 +210,7 @@ spec:
           - name: MY_POD_NAME
             valueFrom:
               fieldRef:
-                fieldPath: metadata.name           
+                fieldPath: metadata.name
           - name: RABBITMQ_USE_LONGNAME
             value: "true"
           # See a note on cluster_formation.k8s.address_type in the config file section
@@ -221,7 +221,7 @@ spec:
           - name: K8S_HOSTNAME_SUFFIX
             value: '.rabbitmq.airflow.svc.cluster.local'
           - name: RABBITMQ_ERLANG_COOKIE
-            value: "mycookie" 
+            value: "mycookie"
       volumes:
         - name: config-volume
           configMap:
@@ -231,15 +231,15 @@ spec:
               path: rabbitmq.conf
             - key: enabled_plugins
               path: enabled_plugins
-  volumeClaimTemplates:
-  - metadata:
-      name: datadir
-    spec:
-      accessModes:
-      - "ReadWriteOnce"
-      resources:
-        requests:
-          storage: 5Gi            
+#  volumeClaimTemplates:
+#  - metadata:
+#      name: datadir
+#    spec:
+#      accessModes:
+#      - "ReadWriteOnce"
+#      resources:
+#        requests:
+#          storage: 5Gi
 ---
 
 apiVersion: extensions/v1beta1
@@ -281,8 +281,8 @@ spec:
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
           value: CeleryExecutor
-        - name: AIRFLOW__WEBSERVER__RBAC
-          value: "True"
+#        - name: AIRFLOW__WEBSERVER__RBAC
+#          value: "True"
         readinessProbe:
           httpGet:
             path: /admin/
@@ -362,7 +362,7 @@ spec:
           containerPort: 5555
         command: ["/entrypoint.sh"]
         args: ["flower"]
----  
+---
 
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -402,7 +402,7 @@ spec:
         - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
-          value: CeleryExecutor  
+          value: CeleryExecutor
         readinessProbe:
           exec:
             command:
@@ -463,7 +463,7 @@ spec:
         - name: AIRFLOW__CORE__SQL_ALCHEMY_CONN
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
-          value: CeleryExecutor  
+          value: CeleryExecutor
         readinessProbe:
           exec:
             command:
@@ -491,7 +491,8 @@ metadata:
   name: airflow-celery-webserver
   namespace: airflow
 spec:
-  type: LoadBalancer
+#  type: LoadBalancer
+  type: NodePort
   ports:
   - name: webserver
     port: 8080
@@ -511,4 +512,4 @@ spec:
     port: 5555
     targetPort: flower
   selector:
-    app: airflow-celery-flower    
+    app: airflow-celery-flower
