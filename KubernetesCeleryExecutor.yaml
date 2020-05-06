@@ -283,6 +283,8 @@ spec:
           value: CeleryExecutor
 #        - name: AIRFLOW__WEBSERVER__RBAC
 #          value: "True"
+#        - name: AIRFLOW__CORE__DEFAULT_TIMEZONE
+#          value: "Asia/Shanghai"
         readinessProbe:
           httpGet:
             path: /admin/
@@ -343,6 +345,8 @@ spec:
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
           value: CeleryExecutor
+#        - name: AIRFLOW__CORE__DEFAULT_TIMEZONE
+#          value: "Asia/Shanghai"
         readinessProbe:
           httpGet:
             path: /
@@ -403,6 +407,8 @@ spec:
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
           value: CeleryExecutor
+#        - name: AIRFLOW__CORE__DEFAULT_TIMEZONE
+#          value: "Asia/Shanghai"
         readinessProbe:
           exec:
             command:
@@ -464,6 +470,8 @@ spec:
           value: mysql://airflow:airflow@$(AIRFLOW_MYSQL_DB_HOST):$(AIRFLOW_MYSQL_DB_PORT)/airflow
         - name: AIRFLOW__CORE__EXECUTOR
           value: CeleryExecutor
+#        - name: AIRFLOW__CORE__DEFAULT_TIMEZONE
+#          value: "Asia/Shanghai"
         readinessProbe:
           exec:
             command:
