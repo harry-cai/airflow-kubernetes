@@ -4,8 +4,9 @@ kind: Namespace
 metadata:
   name: airflow
 
----
 
+---
+# Airflow MySQL for Database
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,7 +23,6 @@ spec:
     app: mysql
 
 ---
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -69,15 +69,16 @@ spec:
 #        requests:
 #          storage: 1Gi
 
----
 
-# from https://github.com/rabbitmq/rabbitmq-peer-discovery-k8s/blob/master/examples/k8s_statefulsets
 ---
+# Airflow RabbitMQ for Task Queue
+# from https://github.com/rabbitmq/rabbitmq-peer-discovery-k8s/blob/master/examples/k8s_statefulsets
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: rabbitmq
   namespace: airflow
+
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -88,6 +89,7 @@ rules:
 - apiGroups: [""]
   resources: ["endpoints"]
   verbs: ["get"]
+
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -101,6 +103,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: endpoint-reader
+
 ---
 kind: Service
 apiVersion: v1
@@ -125,6 +128,7 @@ spec:
      nodePort: 30672
   selector:
     app: rabbitmq
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -240,8 +244,26 @@ spec:
 #      resources:
 #        requests:
 #          storage: 5Gi
----
 
+
+---
+# Airflow WebServer
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-celery-webserver
+  namespace: airflow
+spec:
+#  type: LoadBalancer
+  type: NodePort
+  ports:
+  - name: webserver
+    port: 8080
+    targetPort: webserver
+  selector:
+    app: airflow-celery-webserver
+
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -304,8 +326,25 @@ spec:
           containerPort: 8080
         command: ["/entrypoint.sh"]
         args: ["webserver"]
----
 
+
+---
+# Airflow Flower Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-celery-flower
+  namespace: airflow
+spec:
+  type: NodePort
+  ports:
+  - name: flower
+    port: 5555
+    targetPort: flower
+  selector:
+    app: airflow-celery-flower
+
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -366,8 +405,10 @@ spec:
           containerPort: 5555
         command: ["/entrypoint.sh"]
         args: ["flower"]
----
 
+
+---
+# Airflow Scheduler
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -429,8 +470,10 @@ spec:
           timeoutSeconds: 5
         command: ["/entrypoint.sh"]
         args: ["scheduler"]
----
 
+
+---
+# Airflow Workers
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -492,32 +535,3 @@ spec:
           timeoutSeconds: 5
         command: ["/entrypoint.sh"]
         args: ["worker"]
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: airflow-celery-webserver
-  namespace: airflow
-spec:
-#  type: LoadBalancer
-  type: NodePort
-  ports:
-  - name: webserver
-    port: 8080
-    targetPort: webserver
-  selector:
-    app: airflow-celery-webserver
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: airflow-celery-flower
-  namespace: airflow
-spec:
-  type: NodePort
-  ports:
-  - name: flower
-    port: 5555
-    targetPort: flower
-  selector:
-    app: airflow-celery-flower
