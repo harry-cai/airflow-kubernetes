@@ -1,5 +1,5 @@
-version = 1.10.3
+version = 1.10.10
 build:
-	docker build -t email2liyang/docker-airflow:$(version) .
+	docker build -t caijiawei/docker-airflow:$(version) .
 push:
-	docker push email2liyang/docker-airflow:$(version)
+	docker push caijiawei/docker-airflow:$(version)
