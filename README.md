@@ -2,31 +2,54 @@
 
 deploy airflow into kubernetes env with both LocalExecutor and CeleryExecutor Support, the orignal docker build file is from [https://github.com/puckel/docker-airflow](https://github.com/puckel/docker-airflow). but with some modification to make it work in kubernetes.
 
-## information
+
+
+## Information
 
 please checkout [https://github.com/puckel/docker-airflow](https://github.com/puckel/docker-airflow) for how to use the docker image
 
-* we use mysql as backend rather than postgresql
+* we use mysql as backend rather than postgresql due to testing RBAC with postgresql is not successful
 * we use rabbitmq as broker rather than postgresql
 * we've implemnet a SystemV style of init script, is user copy anything in /usr/local/airflow/config/init/ of docker contianer , it will be executed before webserver started, this is a perfect place to init airflow variables and connections etc
 * we've implemnet a SystemV style of *super*-init script, is user copy anything in /usr/local/airflow/config/super-init/ of docker contianer , it will be executed before webserver started , *as root*, this is a perfect place to init airflow under root user, e.g: fix the hostname and ip mapping issue in /etc/hosts
 * we for CeleryExecutor, we have flower enabled to check the task stats
 
 
-## kubernetes
+
+## Build Docker Images
+
+##### Airflow Image
+
+~~~shell
+cd docker-airflow
+docker build -t caijiawei/docker-airflow:1.10.10 .
+~~~
+
+##### MySQL Image
+
+~~~shell
+cd docker-mysql
+docker build -t caijiawei/docker-mysql:5.7.24 .
+~~~
+
+
+
+## Kubernetes
 
 * [install with minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/#install-minikube)
 * install airflow with LocalExecutor
- 
+
 ```
 kubectl apply -f KubernetesLocalExecutor.yaml
-``` 
+```
 
  * install airflow with CeleryExecutor
 
 ```
 kubectl apply -f KubernetesCeleryExecutor.yaml
-``` 
+```
+
+
 
 ## FAQ
 
